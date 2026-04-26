@@ -5,8 +5,16 @@ by the current environment configuration, and ensures the required PRAGMAs
 are applied on every connection.
 """
 
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
 from sqlalchemy import event
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from config.loader import load_config
 from config.paths import get_paths
@@ -37,3 +45,50 @@ def create_engine_for_env(env: str | None = None) -> AsyncEngine:
         cursor.close()
 
     return engine
+
+
+class Database:
+    """Async database wrapper with engine and session factory.
+
+    Usage::
+
+        db = Database(env="production")
+        async with db.session() as session:
+            result = await session.execute(...)
+    """
+
+    def __init__(self, env: str | None = None) -> None:
+        self.engine: AsyncEngine = create_engine_for_env(env)
+        self._session_factory = async_sessionmaker(
+            self.engine, expire_on_commit=False
+        )
+
+    @asynccontextmanager
+    async def session(self) -> AsyncGenerator[AsyncSession, None]:
+        """Yield an async database session."""
+        session = self._session_factory()
+        try:
+            yield session
+        finally:
+            await session.close()
+
+    async def dispose(self) -> None:
+        """Dispose the underlying engine."""
+        await self.engine.dispose()
+
+
+@asynccontextmanager
+async def get_db(env: str | None = None) -> AsyncGenerator[Database, None]:
+    """Async context manager that creates and disposes a Database.
+
+    Usage::
+
+        async with get_db("production") as db:
+            async with db.session() as session:
+                ...
+    """
+    db = Database(env)
+    try:
+        yield db
+    finally:
+        await db.dispose()

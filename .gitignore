@@ -15,6 +15,7 @@ venv/
 .pytest_cache/
 .coverage
 htmlcov/
+tests/
 
 # Type checkers
 .mypy_cache/

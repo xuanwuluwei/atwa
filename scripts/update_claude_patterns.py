@@ -17,6 +17,7 @@ IGNORE_DIRS = {
     ".git", "node_modules", "__pycache__", ".venv", "venv",
     "dist", "build", ".next", "coverage", ".mypy_cache",
     ".claude", "migrations", ".pytest_cache", ".vscode",
+    "atwa.egg-info",
 }
 MAX_FILES = 60
 

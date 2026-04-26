@@ -1,0 +1,28 @@
+#!/bin/bash
+# atwa-wrap — Record full PTY output from an AI CLI session.
+# Usage: atwa-wrap claude   (replaces: claude)
+#        atwa-wrap codex    (replaces: codex)
+
+set -euo pipefail
+
+# Get current tmux pane ID
+PANE_ID=$(tmux display-message -p "#{pane_id}" 2>/dev/null || echo "unknown")
+CLEAN_ID="${PANE_ID#%}"
+
+# Resolve environment
+ENV="${ATWA_ENV:-production}"
+
+# Build log path
+LOG_DIR="$HOME/.atwa/$ENV/logs/pty"
+LOG_FILE="$LOG_DIR/pane-$CLEAN_ID.log"
+
+# Ensure directory exists
+mkdir -p "$LOG_DIR"
+
+# Use script -F for flush-on-write PTY recording
+# -F is macOS-specific; on Linux, use -f (lowercase) with -c
+if [[ "$(uname)" == "Darwin" ]]; then
+    exec script -F "$LOG_FILE" "$@"
+else
+    exec script -f "$LOG_FILE" -c "$*"
+fi

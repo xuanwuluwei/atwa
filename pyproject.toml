@@ -41,3 +41,4 @@ exclude = ["tests*", "docs*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = ["integration: integration tests that require a real tmux server"]

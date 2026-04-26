@@ -70,9 +70,9 @@ def capture_pane_output(pane_id: str, scrollback: int | None = None) -> str:
 
     try:
         server = libtmux.Server(socket_name=socket)
-        for session in server.list_sessions():
-            for window in session.list_windows():
-                for pane in window.list_panes():
+        for session in server.sessions:
+            for window in session.windows:
+                for pane in window.panes:
                     if pane.pane_id == pane_id:
                         raw = pane.cmd(
                             "capture-pane", "-p", "-S", f"-{scrollback}"
