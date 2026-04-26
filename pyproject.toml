@@ -9,6 +9,7 @@ dependencies = [
     "psutil>=5.9",
     "textdistance>=4.6",
     "sqlalchemy[asyncio]>=2.0",
+    "aiosqlite>=0.20",
     "alembic>=1.13",
     "fastapi>=0.110",
     "uvicorn>=0.29",
@@ -18,9 +19,9 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
-    "ruff>=0.1.15.12",
-    "mypy>=1.20.1"
-
+    "pytest-cov>=4.0",
+    "ruff>=0.15",
+    "mypy>=1.20",
 ]
 phase2 = [
     "fastembed>=0.3",

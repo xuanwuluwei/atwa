@@ -7,6 +7,12 @@
 - FastAPI + uvicorn — API 层
 - 环境管理：conda (env: atwa)，通过 .envrc 自动激活
 
+## Package Management
+- 唯一依赖声明：`pyproject.toml`，禁止用 `pip install` 绕过它直接装包
+- 安装/重装：`pip install -e ".[dev]"`（开发）、`pip install -e ".[dev,phase2]"`（加 Phase 2）
+- `aiosqlite` 是运行时依赖（SQLAlchemy async + SQLite 驱动），不是间接依赖
+- 新增依赖必须声明在 `pyproject.toml` 对应的 `[dependencies]` 或 `[optional-dependencies]` 中
+
 ## Commands
 - Python test: `python -m pytest`
 - Python type check: `python -m mypy <path>` (逐模块检查，非整项目)
