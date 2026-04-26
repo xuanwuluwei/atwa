@@ -1,0 +1,31 @@
+# config/test.toml
+# Isolated port, shortest timeouts, Insight Engine off.
+
+[env]
+name = "test"
+
+[server]
+host = "127.0.0.1"
+port = 8744
+
+[daemon]
+capture_interval_active_ms = 100
+capture_interval_idle_ms   = 500
+
+[thresholds]
+idle_running_s = 5
+idle_long_s    = 15
+slow_tool_s    = 10
+stuck_window   = 3
+
+[log]
+level = "WARNING"
+
+[database]
+timeout_s = 5
+
+[insight_engine]
+enabled = false
+
+[tmux]
+socket = "atwa_test"

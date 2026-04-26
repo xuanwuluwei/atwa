@@ -1,0 +1,52 @@
+# config/default.toml
+# Baseline values for all environments.
+# Environment-specific files override only the items they need to change.
+
+[env]
+name = "production"
+
+[paths]
+# All paths are relative to ~/.atwa/<env>/.  Actual paths are computed
+# dynamically by config/paths.py — the values here are documentation only.
+
+[daemon]
+capture_interval_active_ms = 500
+capture_interval_idle_ms   = 3000
+scrollback_lines            = 200
+
+[thresholds]
+idle_running_s   = 30
+idle_long_s      = 300
+slow_tool_s      = 180
+stuck_similarity = 0.92
+stuck_window     = 5
+
+[costs]
+alert_usd_per_session = 1.00
+
+[server]
+host = "127.0.0.1"
+port = 8742
+
+[log]
+level        = "INFO"
+max_bytes    = 10_485_760   # 10 MB
+backup_count = 3
+
+[pty]
+max_bytes    = 10_485_760
+backup_count = 3
+
+[database]
+journal_mode = "WAL"
+timeout_s    = 30
+pool_size    = 5
+
+[tmux]
+socket = ""
+
+[insight_engine]
+enabled             = true
+anthropic_model     = "claude-sonnet-4-20250514"
+similarity_threshold = 0.88
+min_occurrences     = 5

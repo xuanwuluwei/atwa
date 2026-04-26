@@ -1,0 +1,22 @@
+# config/development.toml
+# Faster polling, DEBUG logging, lower cost threshold.
+
+[env]
+name = "development"
+
+[daemon]
+capture_interval_active_ms = 300
+capture_interval_idle_ms   = 1000
+
+[server]
+host = "127.0.0.1"
+port = 8743
+
+[log]
+level = "DEBUG"
+
+[costs]
+alert_usd_per_session = 0.10
+
+[insight_engine]
+min_occurrences = 2

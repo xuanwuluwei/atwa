@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: mypy config db daemon server insight_engine
+      - run: pytest
+
+  # Frontend not yet created — uncomment when frontend/ exists
+  # typescript:
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: frontend
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "20"
+  #     - run: npm ci
+  #     - run: npx tsc --noEmit
+  #     - run: npx eslint .
+
+  update-patterns:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    needs: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - name: Update CLAUDE.md Code Patterns
+        run: python scripts/update_claude_patterns.py
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git diff --quiet CLAUDE.md || (
+            git add CLAUDE.md
+            git commit -m "chore: update CLAUDE.md code patterns [skip ci]"
+            git push
+          )

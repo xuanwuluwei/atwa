@@ -1,0 +1,15 @@
+# config/production.toml
+# Conservative defaults, stability first.
+
+[env]
+name = "production"
+
+[server]
+host = "127.0.0.1"
+port = 8742
+
+[log]
+level = "INFO"
+
+[database]
+pool_size = 10

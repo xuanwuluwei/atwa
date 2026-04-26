@@ -1,0 +1,236 @@
+#!/usr/bin/env python3
+"""
+扫描项目 codebase，自动生成 CLAUDE.md 的 Code Patterns 部分。
+用法：python scripts/update_claude_patterns.py [project_root]
+
+CLAUDE.md 中的 `## Code Patterns` 段落由本脚本管理，
+手动写的 `## Patterns` 段落不受影响。
+"""
+
+import os
+import re
+import ast
+import sys
+from pathlib import Path
+from collections import Counter
+
+IGNORE_DIRS = {
+    ".git", "node_modules", "__pycache__", ".venv", "venv",
+    "dist", "build", ".next", "coverage", ".mypy_cache",
+    ".claude", "migrations", ".pytest_cache", ".vscode",
+}
+MAX_FILES = 60
+
+SECTION_MARKER = "## Code Patterns"
+
+
+# ── Python 分析 ───────────────────────────────────────────────────────────────
+
+def collect_python_files(root: Path) -> list[Path]:
+    files = []
+    for p in root.rglob("*.py"):
+        if any(d in p.parts for d in IGNORE_DIRS):
+            continue
+        if "test" not in p.stem.lower() and "conftest" not in p.stem.lower():
+            files.append(p)
+        if len(files) >= MAX_FILES:
+            break
+    return files
+
+
+def analyze_python(files: list[Path]) -> dict:
+    exception_classes = []
+    decorator_counter = Counter()
+    type_hint_counts = []
+    async_funcs = 0
+    sync_funcs = 0
+
+    for f in files:
+        try:
+            tree = ast.parse(f.read_text(encoding="utf-8", errors="ignore"))
+        except SyntaxError:
+            continue
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                for base in node.bases:
+                    base_name = getattr(base, "id", "")
+                    if "Exception" in base_name or "Error" in base_name:
+                        exception_classes.append(node.name)
+
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if isinstance(node, ast.AsyncFunctionDef):
+                    async_funcs += 1
+                else:
+                    sync_funcs += 1
+                all_args = node.args.args + node.args.posonlyargs
+                annotated = sum(1 for a in all_args if a.annotation)
+                if all_args:
+                    type_hint_counts.append(annotated / len(all_args))
+                for dec in node.decorator_list:
+                    name = _decorator_name(dec)
+                    if name:
+                        decorator_counter[name] += 1
+
+    avg_hint = sum(type_hint_counts) / len(type_hint_counts) if type_hint_counts else 0
+
+    return {
+        "exception_classes": list(set(exception_classes))[:6],
+        "type_hint_coverage": f"{avg_hint:.0%}",
+        "top_decorators": [d for d, _ in decorator_counter.most_common(5)],
+        "async_ratio": f"{async_funcs}/{async_funcs + sync_funcs}"
+                       if (async_funcs + sync_funcs) else "0/0",
+        "file_count": len(files),
+    }
+
+
+def _decorator_name(dec) -> str | None:
+    if isinstance(dec, ast.Name):
+        return dec.id
+    if isinstance(dec, ast.Attribute):
+        return dec.attr
+    if isinstance(dec, ast.Call):
+        return _decorator_name(dec.func)
+    return None
+
+
+# ── TypeScript 分析 ───────────────────────────────────────────────────────────
+
+def collect_ts_files(root: Path) -> list[Path]:
+    files = []
+    for ext in ("*.ts", "*.tsx"):
+        for p in root.rglob(ext):
+            if any(d in p.parts for d in IGNORE_DIRS):
+                continue
+            if "test" not in p.stem.lower() and ".d.ts" not in p.name:
+                files.append(p)
+        if len(files) >= MAX_FILES:
+            break
+    return files
+
+
+def analyze_typescript(files: list[Path]) -> dict:
+    interface_count = 0
+    type_alias_count = 0
+    async_count = 0
+    import_sources = Counter()
+
+    for f in files:
+        src = f.read_text(encoding="utf-8", errors="ignore")
+        interface_count += len(re.findall(r"\binterface\s+\w+", src))
+        type_alias_count += len(re.findall(r"\btype\s+\w+\s*=", src))
+        async_count += len(re.findall(r"\basync\s+function|\basync\s+\(", src))
+        for m in re.finditer(r"from\s+['\"](@[\w/]+|[\w./]+)['\"]", src):
+            pkg = m.group(1)
+            if not pkg.startswith("."):
+                import_sources[pkg] += 1
+
+    return {
+        "prefer_interface": interface_count >= type_alias_count,
+        "async_usage": async_count,
+        "top_dependencies": [p for p, _ in import_sources.most_common(8)],
+        "file_count": len(files),
+    }
+
+
+# ── 目录结构分析 ──────────────────────────────────────────────────────────────
+
+def analyze_structure(root: Path) -> dict:
+    top_dirs = sorted(
+        p.name for p in root.iterdir()
+        if p.is_dir() and p.name not in IGNORE_DIRS and not p.name.startswith(".")
+    )
+    return {"top_dirs": top_dirs[:10]}
+
+
+# ── 输出生成 ──────────────────────────────────────────────────────────────────
+
+def generate_section(root: Path) -> str:
+    py_files = collect_python_files(root)
+    ts_files = collect_ts_files(root)
+    structure = analyze_structure(root)
+
+    lines = [SECTION_MARKER, ""]
+    lines.append("_Auto-generated by `scripts/update_claude_patterns.py` — do not edit manually_")
+    lines.append("")
+
+    # 目录结构
+    lines.append(f"- Top-level dirs: `{'`, `'.join(structure['top_dirs'])}`")
+    lines.append("")
+
+    # Python
+    if py_files:
+        py = analyze_python(py_files)
+        lines.append("### Python")
+        lines.append(f"- Type hint coverage: **{py['type_hint_coverage']}**"
+                     + (" — keep annotating new functions"
+                        if float(py['type_hint_coverage'].rstrip('%')) < 80
+                        else " — maintain this standard"))
+        lines.append(f"- Async functions: {py['async_ratio']}"
+                     + (" — async is the standard for I/O" if py['async_ratio'] != "0/0" else ""))
+        if py["exception_classes"]:
+            lines.append(f"- Custom exceptions: `{'`, `'.join(py['exception_classes'])}`"
+                         " → raise these instead of bare `Exception`")
+        else:
+            lines.append("- Custom exceptions: none yet — add when needed")
+        if py["top_decorators"]:
+            lines.append(f"- Common decorators: `{'`, `'.join(py['top_decorators'])}`")
+        lines.append(f"- Scanned {py['file_count']} non-test `.py` files")
+        lines.append("")
+
+    # TypeScript
+    if ts_files:
+        ts = analyze_typescript(ts_files)
+        lines.append("### TypeScript")
+        lines.append(f"- Type definition style: prefer `{'interface' if ts['prefer_interface'] else 'type alias'}`")
+        if ts["top_dependencies"]:
+            lines.append(f"- Top external deps: `{'`, `'.join(ts['top_dependencies'])}`")
+        lines.append(f"- async/await usage: {ts['async_usage']} occurrences")
+        lines.append(f"- Scanned {ts['file_count']} non-test `.ts`/`.tsx` files")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+# ── 写回 CLAUDE.md ────────────────────────────────────────────────────────────
+
+def update_claude_md(root: Path, section: str):
+    claude_md = root / "CLAUDE.md"
+
+    if not claude_md.exists():
+        claude_md.write_text(section)
+        print(f"Created {claude_md}")
+        return
+
+    content = claude_md.read_text(encoding="utf-8")
+
+    if SECTION_MARKER in content:
+        before = content[:content.index(SECTION_MARKER)]
+        after_start = content[content.index(SECTION_MARKER):]
+        # 找下一个边界：`## `、`---`、或 `# `（Hard Rules 等）
+        next_boundary = re.search(r"\n(?:## |---\n|# )", after_start[len(SECTION_MARKER):])
+        if next_boundary:
+            after = after_start[len(SECTION_MARKER) + next_boundary.start():]
+        else:
+            after = ""
+        new_content = before + section.rstrip() + "\n" + after
+    else:
+        # 在 `---` 或 `# Hard Rules` 之前插入
+        insert_at = len(content)
+        for marker in ("\n---\n", "\n# Hard Rules"):
+            idx = content.find(marker)
+            if idx != -1 and idx < insert_at:
+                insert_at = idx
+        new_content = content[:insert_at].rstrip() + "\n\n" + section.rstrip() + "\n" + content[insert_at:]
+
+    claude_md.write_text(new_content, encoding="utf-8")
+    print(f"Updated {claude_md}")
+
+
+if __name__ == "__main__":
+    root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
+    root = root.resolve()
+    section = generate_section(root)
+    print(section)
+    print("---")
+    update_claude_md(root, section)
