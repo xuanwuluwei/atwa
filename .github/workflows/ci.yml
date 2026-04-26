@@ -16,7 +16,7 @@ jobs:
           python-version: "3.11"
       - run: pip install -e ".[dev]"
       - run: ruff check .
-      - run: mypy config db daemon server insight_engine
+      - run: mypy config db scripts
       - run: pytest
 
   # Frontend not yet created — uncomment when frontend/ exists
