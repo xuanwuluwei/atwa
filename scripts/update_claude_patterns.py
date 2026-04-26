@@ -39,7 +39,7 @@ def collect_python_files(root: Path) -> list[Path]:
 
 def analyze_python(files: list[Path]) -> dict:
     exception_classes = []
-    decorator_counter = Counter()
+    decorator_counter: Counter[str] = Counter()
     type_hint_counts = []
     async_funcs = 0
     sync_funcs = 0
@@ -112,7 +112,7 @@ def analyze_typescript(files: list[Path]) -> dict:
     interface_count = 0
     type_alias_count = 0
     async_count = 0
-    import_sources = Counter()
+    import_sources: Counter[str] = Counter()
 
     for f in files:
         src = f.read_text(encoding="utf-8", errors="ignore")
