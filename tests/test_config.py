@@ -1,6 +1,5 @@
 """Tests for config.paths and config.loader."""
 
-import os
 from pathlib import Path
 
 import pytest

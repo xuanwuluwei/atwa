@@ -7,7 +7,6 @@ CLAUDE.md 中的 `## Code Patterns` 段落由本脚本管理，
 手动写的 `## Patterns` 段落不受影响。
 """
 
-import os
 import re
 import ast
 import sys

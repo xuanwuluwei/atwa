@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from config.loader import load_config
 from config.paths import get_paths
 from db.engine import create_engine_for_env
-from db.models import AttentionLog, Base, Intervention, PaneSession, ToolEvent
+from db.models import AttentionLog, Intervention, PaneSession, ToolEvent
 
 
 class TestEngineCreation:
