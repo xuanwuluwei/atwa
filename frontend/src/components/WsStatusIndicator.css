@@ -1,0 +1,32 @@
+.ws-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.ws-indicator::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.ws-connected::before {
+  background: #22c55e;
+}
+
+.ws-connecting::before {
+  background: #eab308;
+  animation: pulse 1s infinite;
+}
+
+.ws-disconnected::before {
+  background: #ef4444;
+}
+
+@keyframes pulse {
+  50% { opacity: 0.4; }
+}

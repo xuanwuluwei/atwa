@@ -1,0 +1,38 @@
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.filter-btn {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.filter-count {
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 0 6px;
+  font-size: 11px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.filter-btn.active .filter-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}

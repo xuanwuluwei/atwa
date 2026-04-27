@@ -1,0 +1,73 @@
+.inline-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inline-edit-text {
+  font-size: 14px;
+}
+
+.inline-edit-text.clickable {
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+.inline-edit-text.clickable:hover {
+  background: #f3f4f6;
+}
+
+.inline-edit-text.desc {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.inline-edit-input,
+.inline-edit-textarea {
+  font-size: 14px;
+  padding: 2px 6px;
+  border: 1px solid #93c5fd;
+  border-radius: 3px;
+  outline: none;
+}
+
+.inline-edit-textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 1px 8px;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tag:hover {
+  background: #dbeafe;
+}
+
+.tag-add .tag-input {
+  width: 40px;
+  padding: 1px 4px;
+  font-size: 12px;
+  border: 1px dashed #d1d5db;
+  border-radius: 3px;
+  outline: none;
+  background: transparent;
+}
+
+.tag-add .tag-input:focus {
+  border-color: #93c5fd;
+}

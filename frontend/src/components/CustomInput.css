@@ -1,0 +1,23 @@
+.custom-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 4px 8px;
+  background: white;
+}
+
+.custom-input-field {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.custom-input-hint {
+  color: #9ca3af;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}

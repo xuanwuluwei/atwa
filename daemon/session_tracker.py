@@ -5,7 +5,7 @@ based on events and time thresholds, and persists changes to the database.
 """
 
 import logging
-from typing import Any
+from typing import Any, Callable, Coroutine
 
 from sqlalchemy import update
 
@@ -82,6 +82,9 @@ _EVENT_TRANSITIONS: dict[str, str] = {
 # Terminal statuses — no further transitions
 _TERMINAL_STATUSES = {STATUS_COMPLETED, STATUS_TERMINATED, STATUS_DISCONNECTED}
 
+# Async callback type for state transitions
+OnTransitionCallback = Callable[[str, str, str], Coroutine[Any, Any, None]]
+
 
 class _PaneState:
     """In-memory state for a single pane."""
@@ -148,6 +151,18 @@ class SessionTracker:
         self._stuck_detector = StuckDetector()
         self._retry_detector = RetryLoopDetector()
         self._persisted_panes: set[str] = set()
+        self._on_transition: OnTransitionCallback | None = None
+
+    def set_transition_callback(
+        self, callback: OnTransitionCallback | None
+    ) -> None:
+        """Set an async callback invoked after each state transition.
+
+        Callback signature: ``callback(pane_id, new_status, reason)``.
+        The callback is invoked after persistence; exceptions are logged
+        but do not interrupt the transition.
+        """
+        self._on_transition = callback
 
     def upsert_pane(self, pane_info: PaneInfo) -> None:
         """Register or update a pane. If already tracked, skip."""
@@ -295,12 +310,24 @@ class SessionTracker:
         )
         await self._persist_state(state)
 
+        # Invoke transition callback if set
+        if self._on_transition is not None:
+            try:
+                await self._on_transition(state.pane_id, new_status, reason)
+            except Exception as e:
+                logger.error(
+                    "Transition callback failed for %s: %s", state.pane_id, e
+                )
+
     async def _persist_state(self, state: _PaneState) -> None:
         """Write pane state to DB. try/except protected."""
         try:
             async with self._db.session() as session:
                 now = now_ms()
                 if state.pane_id not in self._persisted_panes:
+                    ended_at: int | None = None
+                    if state.status in _TERMINAL_STATUSES:
+                        ended_at = now
                     session.add(PaneSession(
                         pane_id=state.pane_id,
                         tmux_session=state.session_name,
@@ -309,6 +336,7 @@ class SessionTracker:
                         status=state.status,
                         status_reason=state.status_reason,
                         started_at=now,
+                        ended_at=ended_at,
                         last_output_at=state.last_output_at,
                         token_input=state.token_input,
                         token_output=state.token_output,
@@ -325,18 +353,21 @@ class SessionTracker:
                     )
                     row = result.first()
                     if row is not None:
+                        values: dict[str, Any] = {
+                            "status": state.status,
+                            "status_reason": state.status_reason,
+                            "last_output_at": state.last_output_at,
+                            "token_input": state.token_input,
+                            "token_output": state.token_output,
+                            "cost_usd": state.cost_usd,
+                            "updated_at": now,
+                        }
+                        if state.status in _TERMINAL_STATUSES:
+                            values["ended_at"] = now
                         await session.execute(
                             update(PaneSession)
                             .where(PaneSession.pane_id == state.pane_id)
-                            .values(
-                                status=state.status,
-                                status_reason=state.status_reason,
-                                last_output_at=state.last_output_at,
-                                token_input=state.token_input,
-                                token_output=state.token_output,
-                                cost_usd=state.cost_usd,
-                                updated_at=now,
-                            )
+                            .values(**values)
                         )
                 await session.commit()
         except Exception as e:
