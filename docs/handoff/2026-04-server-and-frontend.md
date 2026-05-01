@@ -80,6 +80,7 @@
   - InlineEdit.tsx：去掉本地 tags state，直接读 session.tags；display_name/description 改为 useEffect 同步，消除 WS 推送与本地状态不一致抖动
   - SessionCard.css：.elapsed 固定 width: 75px + text-align: right，消除时间数字变化引起的横向布局跳动
 - [2026-05-01] 调试反思：遇到 UI 闪烁应先量化渲染频率（console.count / React Profiler），再定位调用栈，最后修根因。本次跳过量化直接逐症状修补，导致尝试了 5+ 个方案才找到根因（WS 推送频率过高）
+- [2026-05-01] 广播节流从前端移到后端：WebSocketBroadcaster 改为消息队列 + 200ms 定时 flush，同 pane_id 自动合并为最新值；前端 useSessions.ts 恢复为直接处理消息（去掉 Map 缓冲 + setInterval）；新增 test_same_pane_collapses_to_latest / test_different_panes_preserved 两个测试，全量 217 tests passed
 
 ## 验收清单
 - [x] Dashboard 在 2 秒内加载完成，显示所有当前 tmux pane
