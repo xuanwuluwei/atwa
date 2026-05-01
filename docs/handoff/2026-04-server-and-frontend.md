@@ -60,6 +60,7 @@
 - [2026-04-27] 全部 166 个 Python 测试通过，ruff check + mypy 均通过
 - [2026-04-27] 新增 17 个服务层集成测试（test_service_layer.py），覆盖 TC-TRACK-001..005、TC-ATTN-001、TC-API-001..006、TC-WS-001..003、TC-DB-001..002，全部 210 个测试通过
 - [2026-04-27] 修复 session_tracker.py bug：terminal status 转换时未设置 ended_at 字段，现已在 insert 和 update 两条路径中补全
+- [2026-04-27] 修复 vite.config.ts 代理端口硬编码问题：改为从 VITE_API_PORT / VITE_API_HOST 环境变量读取，scripts/dev 启动前端时注入对应端口
 
 ## 验收清单
 - [ ] Dashboard 在 2 秒内加载完成，显示所有当前 tmux pane

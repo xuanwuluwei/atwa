@@ -29,15 +29,16 @@
 > 只追加，不改写。记录过程中的决策、变更、阻塞。
 - [2026-04-22] 创建 Spec 和 Handoff Note，准备开始开发
 - [2026-04-22] 完成基础 config 模块实现：paths.py、loader.py、四个 TOML 文件、__init__.py、pyproject.toml。28 个测试全部通过。修复了 ATWA_OVERRIDE_ 环境变量对含下划线 section 名（如 insight_engine）的解析问题——改为从右往左尝试各 split 点匹配已知 section
+- [2026-04-27] server/main.py 加入 PID 防重复启动逻辑：启动时检查 PID 文件是否指向存活进程，存活则拒绝启动，过期则清理；正常退出时清理 PID 文件。补全验收清单 #7 的 Python 层缺失
 
 ## 验收清单
-- [ ] `config/paths.py` — `get_paths()` 返回正确的目录结构，`ensure_dirs()` 可自动创建目录
-- [ ] `config/loader.py` — `load_config()` 按优先级正确加载（default → env → ATWA_OVERRIDE_）
-- [ ] `config/default.toml` 四个文件内容与设计文档一致
-- [ ] 三环境可同时启动，端口无冲突（8742/8743/8744）
-- [ ] 日志文件收敛在 `~/.atwa/<env>/logs/` 下
-- [ ] PTY 录制文件收敛在 `~/.atwa/<env>/logs/pty/` 下
-- [ ] pid 文件收敛在 `~/.atwa/<env>/tmp/` 下，启动检查防重复
-- [ ] 测试环境 fixture 每次运行前清理 `~/.atwa/test/`
-- [ ] deep_merge 为深度递归合并，非浅覆盖
-- [ ] ATWA_OVERRIDE_* 环境变量覆盖生效且类型正确
+- [x] `config/paths.py` — `get_paths()` 返回正确的目录结构，`ensure_dirs()` 可自动创建目录
+- [x] `config/loader.py` — `load_config()` 按优先级正确加载（default → env → ATWA_OVERRIDE_）
+- [x] `config/default.toml` 四个文件内容与设计文档一致
+- [x] 三环境可同时启动，端口无冲突（8742/8743/8744）
+- [x] 日志文件收敛在 `~/.atwa/<env>/logs/` 下
+- [x] PTY 录制文件收敛在 `~/.atwa/<env>/logs/pty/` 下
+- [x] pid 文件收敛在 `~/.atwa/<env>/tmp/` 下，启动检查防重复（Python 层 `server/main.py` + shell 层 `scripts/dev` 双重保护）
+- [x] 测试环境 fixture 每次运行前清理 `~/.atwa/test/`（session-scoped 库/日志清理 + function-scoped 环境变量隔离）
+- [x] deep_merge 为深度递归合并，非浅覆盖
+- [x] ATWA_OVERRIDE_* 环境变量覆盖生效且类型正确

@@ -10,7 +10,7 @@ PANE_ID=$(tmux display-message -p "#{pane_id}" 2>/dev/null || echo "unknown")
 CLEAN_ID="${PANE_ID#%}"
 
 # Resolve environment
-ENV="${ATWA_ENV:-production}"
+ENV="${ATWA_ENV:-development}"
 
 # Build log path
 LOG_DIR="$HOME/.atwa/$ENV/logs/pty"

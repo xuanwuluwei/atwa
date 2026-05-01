@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
@@ -18,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select
 
 from config.loader import load_config
-from config.paths import ensure_dirs
+from config.paths import ensure_dirs, get_paths
 from daemon.attention_tracker import AttentionTracker
 from daemon.main import create_daemon_task
 from daemon.session_tracker import SessionTracker
@@ -40,8 +41,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan: init resources, run daemon, cleanup."""
     cfg = load_config()
     env_name = cfg["env"]["name"]
+    paths = get_paths(env_name)
     ensure_dirs(env_name)
     setup_logging(env_name)
+
+    # Prevent duplicate starts: check & write PID file
+    pid_file = paths["server_pid"]
+    if pid_file.exists():
+        old_pid_str = pid_file.read_text().strip()
+        if old_pid_str.isdigit():
+            old_pid = int(old_pid_str)
+            try:
+                os.kill(old_pid, 0)
+                logger.warning(
+                    "Server already running (pid %d, env=%s). removing.",
+                    old_pid,
+                    env_name,
+                )
+            except ProcessLookupError:
+                logger.info("Stale PID file found (pid %d gone), removing.", old_pid)
+        pid_file.unlink()
+    pid_file.write_text(str(os.getpid()))
 
     # Shared singletons
     db = Database(env_name)
@@ -103,6 +123,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
 
     # Shutdown
+    pid_file.unlink(missing_ok=True)
     daemon_task.cancel()
     try:
         await daemon_task
