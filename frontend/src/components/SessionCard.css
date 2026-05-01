@@ -24,6 +24,9 @@
   font-size: 13px;
   font-family: monospace;
   color: #6b7280;
+  width: 75px;
+  text-align: right;
+  display: inline-block;
 }
 
 .card-input-area {

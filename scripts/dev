@@ -14,7 +14,7 @@ set -euo pipefail
 
 # ---- Parse arguments ----
 ACTION="start"
-ENV="development"
+ENV="production"
 
 for arg in "$@"; do
     case "$arg" in

@@ -8,10 +8,13 @@ interface Props {
 }
 
 export function StatusBadge({ status }: Props) {
+  console.count('StatusBadge render'); // 加这行
+  const displayStatus = status || '—';
   const colorClass = STATUS_COLORS[status] || 'status-unknown';
   return (
     <span data-testid="status-badge" className={`status-badge ${colorClass}`}>
-      {status}
+      <span className="status-dot" />
+      {displayStatus}
     </span>
   );
 }

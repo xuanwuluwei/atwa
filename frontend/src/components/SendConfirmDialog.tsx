@@ -1,5 +1,6 @@
 /** Confirmation dialog before sending input to a pane. */
 
+import { useEffect, useRef } from 'react';
 import './SendConfirmDialog.css';
 
 interface Props {
@@ -19,8 +20,24 @@ export function SendConfirmDialog({
   onConfirm,
   onCancel,
 }: Props) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    dialogRef.current?.focus();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        onConfirm();
+      } else if (e.key === 'Escape') {
+        onCancel();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onConfirm, onCancel]);
+
   return (
-    <div data-testid="send-confirm-dialog" className="confirm-overlay">
+    <div data-testid="send-confirm-dialog" className="confirm-overlay" ref={dialogRef} tabIndex={-1}>
       <div className="confirm-dialog">
         <h3>确认发送</h3>
 
@@ -40,8 +57,8 @@ export function SendConfirmDialog({
         </div>
 
         <div className="confirm-actions">
-          <button className="btn-cancel" onClick={onCancel}>取消</button>
-          <button className="btn-confirm" onClick={onConfirm}>确认发送</button>
+          <button data-testid="send-cancel-btn" className="btn-cancel" onClick={onCancel}>取消</button>
+          <button data-testid="send-confirm-btn" className="btn-confirm" onClick={onConfirm}>确认发送</button>
         </div>
       </div>
     </div>

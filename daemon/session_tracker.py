@@ -305,7 +305,7 @@ class SessionTracker:
         old_status = state.status
         state.status = new_status
         state.status_reason = reason
-        logger.info(
+        logger.debug(
             "Pane %s: %s -> %s (%s)", state.pane_id, old_status, new_status, reason
         )
         await self._persist_state(state)

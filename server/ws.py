@@ -66,7 +66,7 @@ class WebSocketBroadcaster:
         dead: set[WebSocket] = set()
         data = json.dumps(message)
         size_bytes = len(data.encode())
-        logger.info(
+        logger.debug(
             "ws.broadcast.start",
             extra={
                 "client_count": self.client_count,

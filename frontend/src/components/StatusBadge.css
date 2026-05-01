@@ -1,16 +1,39 @@
 .status-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
   color: white;
+  width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .status-red { background: #dc2626; }
+.status-red .status-dot { background: #fca5a5; }
 .status-orange { background: #ea580c; }
-.status-yellow { background: #ca8a04; }
+.status-orange .status-dot { background: #fdba74; }
+.status-yellow { background: #eab308; }
+.status-yellow .status-dot { background: #fef08a; }
 .status-blue { background: #2563eb; }
+.status-blue .status-dot { background: #93c5fd; }
 .status-green { background: #16a34a; }
+.status-green .status-dot { background: #86efac; }
 .status-black { background: #374151; }
+.status-black .status-dot { background: #9ca3af; }
 .status-unknown { background: #6b7280; }
+.status-unknown .status-dot { background: #d1d5db; }

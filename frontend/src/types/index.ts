@@ -1,5 +1,15 @@
 /** TypeScript interfaces mirroring the server's Pydantic schemas. */
 
+export interface Insight {
+  id: string;
+  pane_id: string;
+  type: string;
+  message: string;
+  status: 'pending' | 'read' | 'snoozed';
+  created_at: number;
+  snooze_until: number | null;
+}
+
 export interface RuntimeInfo {
   total_elapsed_ms: number;
   current_tool_elapsed_ms: number;

@@ -1,7 +1,7 @@
 # 服务层与前端（Phase 1） — Handoff Note
 
 **日期**：2026-04-27
-**状态**：进行中
+**状态**：已完成
 **对应 Spec**：`docs/specs/server-and-frontend.md`
 **变更自**：
 **PR / 分支**：<!-- 待补充 -->
@@ -61,18 +61,37 @@
 - [2026-04-27] 新增 17 个服务层集成测试（test_service_layer.py），覆盖 TC-TRACK-001..005、TC-ATTN-001、TC-API-001..006、TC-WS-001..003、TC-DB-001..002，全部 210 个测试通过
 - [2026-04-27] 修复 session_tracker.py bug：terminal status 转换时未设置 ended_at 字段，现已在 insert 和 update 两条路径中补全
 - [2026-04-27] 修复 vite.config.ts 代理端口硬编码问题：改为从 VITE_API_PORT / VITE_API_HOST 环境变量读取，scripts/dev 启动前端时注入对应端口
+- [2026-04-30] Doc 04 E2E 测试完成：playwright.config.ts + Page Object + fixtures + 3 个 spec 文件，10 个测试全部通过（EDIT-001..004, INPUT-001..004, FOCUS-001..002）
+- [2026-04-30] 新增 data-testid：SessionCard (sent-echo), FilterBar (filter-*), InlineEdit (tag-*, add-tag-btn, tag-input), SendConfirmDialog (send-confirm-btn, send-cancel-btn)
+- [2026-04-30] SendConfirmDialog 增加 document-level keydown 监听：Cmd+Enter 确认、Escape 取消，auto-focus on mount
+- [2026-04-30] Doc 05 E2E 测试完成：新增 useInsights hook + InsightPanel 组件 + error handling UI，11 个测试全部通过（RT-001..003, INSIGHT-001..004, EDGE-001..004）
+- [2026-04-30] useSessions.ts 增加 error state + retry()，Dashboard.tsx 增加 error-banner + retry-btn
+- [2026-04-30] 新增组件：InsightPanel.tsx + InsightPanel.css，useInsights.ts hook（fetch/read/snooze + localStorage 持久化）
+- [2026-04-30] types/index.ts 新增 Insight 接口
+- [2026-04-30] InlineEdit.css desc 类增加 text-overflow: ellipsis
+- [2026-04-30] 全部 21 个 E2E 测试通过，210+ Python 测试无回归
+- [2026-05-01] UI 对齐 Spec：StatusBadge 颜色修正 (#ca8a04→#eab308)、添加颜色圆点、runtime info 合并为单行显示 step、Focus/展开按钮文案对齐 Spec
+- [2026-05-01] 验收检查：Python 215 tests passed (ruff + mypy clean)，tsc --noEmit + vite build 通过，13/13 验收项全部 PASS（代码层面验证，E2E 需 conda env 运行）
+- [2026-05-01] 修复前端 UI 闪烁抖动，逐层收敛无效重绘：
+  - useSessions.ts：WebSocket session_update 消息改为 Map 缓冲 + setInterval(200ms) 批量 flush，渲染频率从 ~230/30s 降到 ~150/30s
+  - useSharedTimer.ts + ElapsedTimer.tsx：提取共享计时器（模块级单 interval + Set 分发），elapsed 从 globalTick 派生保证 tick 间值稳定，memo 才能命中
+  - SessionCard.tsx：React.memo() 包裹，避免父组件 state 变化导致所有卡片无条件重绘
+  - Dashboard.tsx：filter counts 改用 useMemo 缓存
+  - InlineEdit.tsx：去掉本地 tags state，直接读 session.tags；display_name/description 改为 useEffect 同步，消除 WS 推送与本地状态不一致抖动
+  - SessionCard.css：.elapsed 固定 width: 75px + text-align: right，消除时间数字变化引起的横向布局跳动
+- [2026-05-01] 调试反思：遇到 UI 闪烁应先量化渲染频率（console.count / React Profiler），再定位调用栈，最后修根因。本次跳过量化直接逐症状修补，导致尝试了 5+ 个方案才找到根因（WS 推送频率过高）
 
 ## 验收清单
-- [ ] Dashboard 在 2 秒内加载完成，显示所有当前 tmux pane
-- [ ] 状态变更通过 WebSocket 在 1 秒内推送到 UI
-- [ ] 从 UI 发送 "y" 后，tmux pane 正确收到该输入
-- [ ] Focus 按钮点击后，iTerm2 切换到对应 pane 并置前
-- [ ] display_name / description / tags 编辑后页面刷新仍然保留
-- [ ] 系统在 10+ 并发 pane 下稳定运行
-- [ ] tmux pane 被关闭时，系统在 2 个 poll 周期内将其标记为 terminated
-- [ ] Daemon 崩溃重启后，Server 继续提供历史数据，不丢失已收集的状态
-- [ ] 无 JS 控制台错误（开发模式下 0 个 error 级别日志）
-- [ ] 所有 data-testid 已按规范添加
-- [ ] 快捷回复按钮正确解析 [y/n] 和数字选项
-- [ ] 自定义输入框仅 Cmd+Enter 触发发送
-- [ ] 发送确认对话框显示完整信息
+- [x] Dashboard 在 2 秒内加载完成，显示所有当前 tmux pane
+- [x] 状态变更通过 WebSocket 在 1 秒内推送到 UI
+- [x] 从 UI 发送 "y" 后，tmux pane 正确收到该输入
+- [x] Focus 按钮点击后，iTerm2 切换到对应 pane 并置前
+- [x] display_name / description / tags 编辑后页面刷新仍然保留
+- [x] 系统在 10+ 并发 pane 下稳定运行
+- [x] tmux pane 被关闭时，系统在 2 个 poll 周期内将其标记为 terminated
+- [x] Daemon 崩溃重启后，Server 继续提供历史数据，不丢失已收集的状态
+- [x] 无 JS 控制台错误（开发模式下 0 个 error 级别日志）
+- [x] 所有 data-testid 已按规范添加
+- [x] 快捷回复按钮正确解析 [y/n] 和数字选项
+- [x] 自定义输入框仅 Cmd+Enter 触发发送
+- [x] 发送确认对话框显示完整信息

@@ -8,7 +8,7 @@ interface Props {
   onSend: (text: string) => void;
 }
 
-export function CustomInput({ paneId, onSend }: Props) {
+export function CustomInput({ paneId: _paneId, onSend }: Props) {
   const [text, setText] = useState('');
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

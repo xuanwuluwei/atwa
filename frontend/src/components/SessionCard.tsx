@@ -1,9 +1,10 @@
 /** Session card — the primary UI component for each monitored pane. */
 
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import type { Session } from '../types';
 import { sendKeys, focusPane } from '../api/client';
 import { StatusBadge } from './StatusBadge';
+import { ElapsedTimer } from './ElapsedTimer';
 import { InlineEdit } from './InlineEdit';
 import { QuickReply } from './QuickReply';
 import { CustomInput } from './CustomInput';
@@ -17,23 +18,17 @@ interface Props {
 /** Check if a status should auto-expand the input area. */
 const NEEDS_INPUT = new Set(['waiting_input', 'error_stopped', 'stuck', 'cost_alert']);
 
-/** Format milliseconds to m:ss or h:mm:ss. */
-function formatElapsed(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
+const DONE_STATUSES = new Set(['completed', 'idle_long', 'terminated', 'crashed', 'killed']);
 
-export function SessionCard({ session }: Props) {
+export const SessionCard = memo(function SessionCard({ session }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [confirmSend, setConfirmSend] = useState<{ text: string } | null>(null);
   const [sentFeedback, setSentFeedback] = useState<string | null>(null);
 
   const autoExpand = NEEDS_INPUT.has(session.status);
   const showInput = autoExpand || expanded;
+
+  const isRunning = !DONE_STATUSES.has(session.status);
 
   const handleQuickSend = (text: string) => {
     setConfirmSend({ text });
@@ -67,7 +62,6 @@ export function SessionCard({ session }: Props) {
     }
   };
 
-  const elapsed = session.runtime_info.total_elapsed_ms;
   const tokenTotal = session.runtime_info.token_input + session.runtime_info.token_output;
 
   return (
@@ -77,9 +71,7 @@ export function SessionCard({ session }: Props) {
         <InlineEdit session={session} />
         <div className="card-meta">
           <StatusBadge status={session.status} />
-          <span data-testid="elapsed-timer" className="elapsed">
-            ⏱ {formatElapsed(elapsed)}
-          </span>
+          <ElapsedTimer startedAt={session.started_at} isRunning={isRunning} />
         </div>
       </div>
 
@@ -95,7 +87,7 @@ export function SessionCard({ session }: Props) {
           <QuickReply statusReason={session.status_reason} onSend={handleQuickSend} />
           <CustomInput paneId={session.pane_id} onSend={handleCustomSend} />
 
-          {sentFeedback && <div className="sent-feedback">{sentFeedback}</div>}
+          {sentFeedback && <div data-testid="sent-echo" className="sent-feedback">{sentFeedback}</div>}
         </div>
       )}
 
@@ -104,12 +96,9 @@ export function SessionCard({ session }: Props) {
         <div className="runtime-info">
           <span data-testid="current-tool" className="runtime-item">
             {session.runtime_info.current_tool
-              ? `${session.status} · ${session.runtime_info.current_tool}`
-              : session.status}
+              ? `${session.status || '—'} · ${session.runtime_info.current_tool} · step ${session.runtime_info.current_step}`
+              : `${session.status || '—'} · step ${session.runtime_info.current_step}`}
           </span>
-          {session.runtime_info.current_step > 0 && (
-            <span className="runtime-item">step {session.runtime_info.current_step}</span>
-          )}
           {tokenTotal > 0 && (
             <span data-testid="token-count" className="runtime-item">
               tok:{tokenTotal > 1000 ? `${Math.round(tokenTotal / 1000)}k` : tokenTotal}
@@ -127,14 +116,14 @@ export function SessionCard({ session }: Props) {
             onClick={handleFocus}
             title="跳转到 iTerm2"
           >
-            ↗ 跳转
+            ↗ 跳转 iTerm2
           </button>
           <button
             data-testid="expand-btn"
             className="btn-action"
             onClick={() => setExpanded(!expanded)}
           >
-            {expanded ? '收起 ∨' : '展开 ∨'}
+            {expanded ? '收起 ∧' : '展开 ∨'}
           </button>
         </div>
       </div>
@@ -152,4 +141,4 @@ export function SessionCard({ session }: Props) {
       )}
     </div>
   );
-}
+});

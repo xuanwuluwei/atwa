@@ -14,10 +14,18 @@ export function InlineEdit({ session }: Props) {
   const [editingDesc, setEditingDesc] = useState(false);
   const [nameValue, setNameValue] = useState(session.display_name || '');
   const [descValue, setDescValue] = useState(session.description || '');
-  const [tags, setTags] = useState(session.tags);
   const [newTag, setNewTag] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descInputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Sync local state from props when not editing
+  useEffect(() => {
+    setNameValue(session.display_name || '');
+  }, [session.display_name]);
+
+  useEffect(() => {
+    setDescValue(session.description || '');
+  }, [session.description]);
 
   useEffect(() => {
     if (editingName && nameInputRef.current) {
@@ -47,17 +55,15 @@ export function InlineEdit({ session }: Props) {
 
   const addTag = async () => {
     const tag = newTag.trim();
-    if (tag && !tags.includes(tag)) {
-      const newTags = [...tags, tag];
-      setTags(newTags);
+    if (tag && !session.tags.includes(tag)) {
+      const newTags = [...session.tags, tag];
       setNewTag('');
       await updateSessionMetadata(session.pane_id, { tags: newTags });
     }
   };
 
   const removeTag = async (tag: string) => {
-    const newTags = tags.filter(t => t !== tag);
-    setTags(newTags);
+    const newTags = session.tags.filter(t => t !== tag);
     await updateSessionMetadata(session.pane_id, { tags: newTags });
   };
 
@@ -104,13 +110,14 @@ export function InlineEdit({ session }: Props) {
       )}
 
       <div className="tags-container">
-        {tags.map(tag => (
-          <span key={tag} className="tag" onClick={() => removeTag(tag)}>
+        {session.tags.map(tag => (
+          <span key={tag} data-testid={`tag-${tag}`} className="tag" onClick={() => removeTag(tag)}>
             {tag} ×
           </span>
         ))}
-        <span className="tag-add">
+        <span data-testid="add-tag-btn" className="tag-add">
           <input
+            data-testid="tag-input"
             className="tag-input"
             value={newTag}
             onChange={e => setNewTag(e.target.value)}

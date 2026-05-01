@@ -17,6 +17,7 @@ export function FilterBar({ current, onChange, counts }: Props) {
       {FILTER_ORDER.map(group => (
         <button
           key={group}
+          data-testid={`filter-${group.toLowerCase()}`}
           className={`filter-btn ${group === current ? 'active' : ''}`}
           onClick={() => onChange(group)}
         >
